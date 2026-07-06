@@ -3,61 +3,857 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Love U</title>
+    <title>FuckWords</title>
     <style>
       :root {
         color-scheme: light;
-        --bg: #f7f4ee;
-        --ink: #222831;
-        --muted: #59616f;
-        --accent: #2f80ed;
+        --top-offset: 0px;
+        --paper: #fbf8ef;
+        --paper-strong: #f1eadb;
+        --ink: #191714;
+        --muted: #70695d;
+        --line: #d8cebb;
+        --accent: #d54d2f;
+        --accent-dark: #9f2e1b;
+        --green: #1f8a5b;
+        --shadow: 0 18px 48px rgba(42, 33, 21, 0.12);
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html,
+      body {
+        min-height: 100%;
+      }
+
       body {
         margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: var(--bg);
+        font-family: ui-serif, Georgia, "Times New Roman", "Noto Serif SC", serif;
+        background:
+          linear-gradient(90deg, rgba(25, 23, 20, 0.04) 1px, transparent 1px),
+          linear-gradient(rgba(25, 23, 20, 0.035) 1px, transparent 1px),
+          var(--paper);
+        background-size: 36px 36px;
         color: var(--ink);
       }
 
-      main {
-        width: min(92vw, 680px);
-        padding: 56px 24px;
-        text-align: center;
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .app {
+        width: min(1440px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 10px 0 28px;
+      }
+
+      .top-panel {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        padding-bottom: 8px;
+        background:
+          linear-gradient(90deg, rgba(25, 23, 20, 0.04) 1px, transparent 1px),
+          linear-gradient(rgba(25, 23, 20, 0.035) 1px, transparent 1px),
+          var(--paper);
+        background-size: 36px 36px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        background: rgba(251, 248, 239, 0.88);
+      }
+
+      .kicker {
+        margin: 0 0 4px;
+        color: var(--accent-dark);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
       }
 
       h1 {
-        margin: 0 0 16px;
-        font-size: clamp(2.5rem, 8vw, 5rem);
-        font-weight: 800;
-        line-height: 1;
+        margin: 0;
+        font-size: clamp(1.45rem, 3vw, 2.35rem);
+        line-height: 0.95;
         letter-spacing: 0;
       }
 
-      p {
-        margin: 0 auto;
-        max-width: 520px;
-        color: var(--muted);
-        font-size: 1.125rem;
-        line-height: 1.7;
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(86px, 1fr));
+        gap: 6px;
+        min-width: min(340px, 100%);
       }
 
-      .mark {
-        color: var(--accent);
+      .stat {
+        min-height: 48px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        background: var(--paper-strong);
+      }
+
+      .stat b {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 1.1rem;
+        line-height: 1;
+      }
+
+      .stat span {
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 150px 150px auto;
+        gap: 8px;
+        align-items: center;
+        margin: 8px 0;
+      }
+
+      .field,
+      .cache-button {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        background: rgba(255, 252, 244, 0.92);
+        color: var(--ink);
+      }
+
+      .field {
+        width: 100%;
+        padding: 0 10px;
+        outline: none;
+      }
+
+      .field:focus {
+        border-color: var(--accent);
+      }
+
+      .cache-button {
+        padding: 0 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .cache-button:hover:not(:disabled) {
+        border-color: var(--ink);
+      }
+
+      .cache-button:disabled {
+        cursor: wait;
+        opacity: 0.64;
+      }
+
+      .status {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .table-shell {
+        overflow: visible;
+        border: 1px solid var(--line);
+        background: rgba(255, 252, 244, 0.96);
+        box-shadow: var(--shadow);
+      }
+
+      .table-scroll {
+        overflow: visible;
+      }
+
+      table {
+        width: 100%;
+        min-width: 860px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        position: sticky;
+        top: var(--top-offset);
+        z-index: 4;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      td {
+        font-size: 0.98rem;
+        line-height: 1.45;
+      }
+
+      tbody tr:hover {
+        background: #fff4dc;
+      }
+
+      tbody tr {
+        cursor: pointer;
+      }
+
+      tbody tr.is-playing {
+        background: #ffe7b8;
+      }
+
+      .word {
+        min-width: 150px;
+        font-size: 1.18rem;
+        font-weight: 800;
+      }
+
+      .pos {
+        width: 130px;
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.82rem;
+      }
+
+      .meaning {
+        min-width: 360px;
+        max-width: 520px;
+        position: relative;
+        outline: none;
+      }
+
+      .meaning.is-truncated {
+        cursor: help;
+      }
+
+      .meaning-text {
+        display: block;
+        overflow: hidden;
+        color: var(--ink);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .meaning.is-truncated:hover,
+      .meaning.is-truncated:focus {
+        z-index: 6;
+      }
+
+      .meaning.is-truncated:hover::after,
+      .meaning.is-truncated:focus::after {
+        content: attr(data-meaning);
+        position: absolute;
+        top: calc(100% - 4px);
+        left: 10px;
+        width: min(620px, calc(100vw - 40px));
+        max-height: 260px;
+        overflow: auto;
+        padding: 10px 12px;
+        border: 1px solid rgba(25, 23, 20, 0.18);
+        border-radius: 6px;
+        background: #fffdf7;
+        color: var(--ink);
+        font-size: 0.94rem;
+        line-height: 1.6;
+        white-space: normal;
+        box-shadow: 0 12px 34px rgba(42, 33, 21, 0.2);
+      }
+
+      .level {
+        width: 88px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 42px;
+        min-height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--ink);
+        background: var(--paper-strong);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+
+      .mastery {
+        width: 126px;
+      }
+
+      .meter {
+        display: grid;
+        grid-template-columns: repeat(5, 16px);
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .dot {
+        height: 8px;
+        border: 1px solid var(--line);
+        background: transparent;
+      }
+
+      .dot.on {
+        border-color: var(--green);
+        background: var(--green);
+      }
+
+      .actions {
+        width: 132px;
+      }
+
+      .stepper {
+        display: inline-grid;
+        grid-template-columns: 36px 36px;
+        gap: 6px;
+      }
+
+      .stepper button {
+        width: 36px;
+        height: 34px;
+        border: 1px solid var(--ink);
+        background: var(--paper);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 1.15rem;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .stepper button:hover:not(:disabled) {
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      .stepper button:disabled {
+        cursor: not-allowed;
+        opacity: 0.32;
+      }
+
+      .empty,
+      .error {
+        padding: 36px 24px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .error {
+        color: var(--accent-dark);
+      }
+
+      @media (max-width: 980px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar {
+          grid-template-columns: minmax(180px, 1fr) 120px 120px auto;
+        }
+
+        .summary {
+          min-width: 0;
+        }
+
+        th,
+        td {
+          padding: 11px 10px;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .app {
+          width: min(100vw - 20px, 1440px);
+          padding: 10px 0 16px;
+        }
+
+        .hero {
+          padding: 8px 10px;
+        }
+
+        .summary {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+
+        .stat {
+          min-height: 36px;
+          padding: 6px 8px;
+        }
+
+        .toolbar {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+
+        .meaning {
+          min-width: 280px;
+        }
       }
     </style>
   </head>
   <body>
-    <main>
-      <h1>Love U<span class="mark">.</span></h1>
-      <p>一个很简单的页面，留一句直接又漂亮的话。</p>
+    <main class="app">
+      <div id="topPanel" class="top-panel">
+        <section class="hero">
+          <div>
+            <p class="kicker">American Oxford 3000 · CEFR</p>
+            <h1>FuckWords</h1>
+          </div>
+          <div class="summary" aria-label="词库统计">
+            <div class="stat">
+              <b id="totalCount">0</b>
+              <span>total words</span>
+            </div>
+            <div class="stat">
+              <b id="shownCount">0</b>
+              <span>shown now</span>
+            </div>
+            <div class="stat">
+              <b id="avgMastery">0.0</b>
+              <span>avg mastery</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="toolbar" aria-label="筛选工具">
+          <input id="searchInput" class="field" type="search" placeholder="搜索单词、释义、词性">
+          <select id="levelFilter" class="field">
+            <option value="">全部等级</option>
+          </select>
+          <select id="masteryFilter" class="field">
+            <option value="">全部熟练度</option>
+            <option value="1">熟练度 1</option>
+            <option value="2">熟练度 2</option>
+            <option value="3">熟练度 3</option>
+            <option value="4">熟练度 4</option>
+            <option value="5">熟练度 5</option>
+          </select>
+          <button id="cacheAudio" class="cache-button" type="button" disabled>缓存音频</button>
+        </section>
+
+        <p id="status" class="status">正在加载词库...</p>
+      </div>
+
+      <section class="table-shell" aria-live="polite">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>单词</th>
+                <th>词性</th>
+                <th>中文释义</th>
+                <th>分类</th>
+                <th>熟练度</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="wordBody"></tbody>
+          </table>
+          <div id="message" class="empty" hidden></div>
+        </div>
+      </section>
     </main>
+
+    <script>
+      const DATA_URL = "American_Oxford_3000_by_CEFR_level.json";
+      const CACHE_KEY = "fuckwords:american-oxford-3000:v1";
+      const MAX_MASTERY = 5;
+      const MIN_MASTERY = 1;
+
+      const state = {
+        words: [],
+        filtered: [],
+        query: "",
+        level: "",
+        mastery: "",
+        serviceWorkerReady: false,
+        audio: new Audio(),
+        playingIndex: null
+      };
+
+      const els = {
+        topPanel: document.getElementById("topPanel"),
+        totalCount: document.getElementById("totalCount"),
+        shownCount: document.getElementById("shownCount"),
+        avgMastery: document.getElementById("avgMastery"),
+        searchInput: document.getElementById("searchInput"),
+        levelFilter: document.getElementById("levelFilter"),
+        masteryFilter: document.getElementById("masteryFilter"),
+        cacheAudio: document.getElementById("cacheAudio"),
+        status: document.getElementById("status"),
+        body: document.getElementById("wordBody"),
+        message: document.getElementById("message")
+      };
+
+      init();
+
+      async function init() {
+        bindEvents();
+        updateStickyOffset();
+        registerAudioWorker();
+
+        try {
+          state.words = loadCachedWords() || await fetchWords();
+          normalizeWords();
+          buildLevelFilter();
+          applyFilters();
+          updateStatus("已加载，熟练度修改会自动持久化到浏览器缓存。");
+        } catch (error) {
+          showMessage("词库加载失败。请通过本地 HTTP 服务打开本页面，例如在当前目录执行：python3 -m http.server 8000");
+          updateStatus(error.message || "加载失败");
+        }
+      }
+
+      function bindEvents() {
+        if ("ResizeObserver" in window) {
+          new ResizeObserver(updateStickyOffset).observe(els.topPanel);
+        } else {
+          window.addEventListener("resize", updateStickyOffset);
+        }
+
+        window.addEventListener("resize", () => requestAnimationFrame(markTruncatedMeanings));
+
+        els.searchInput.addEventListener("input", () => {
+          state.query = els.searchInput.value.trim().toLowerCase();
+          applyFilters();
+        });
+
+        els.levelFilter.addEventListener("change", () => {
+          state.level = els.levelFilter.value;
+          applyFilters();
+        });
+
+        els.masteryFilter.addEventListener("change", () => {
+          state.mastery = els.masteryFilter.value;
+          applyFilters();
+        });
+
+        els.cacheAudio.addEventListener("click", cacheAllAudio);
+
+        state.audio.addEventListener("ended", () => {
+          state.playingIndex = null;
+          applyPlayingState();
+        });
+
+        els.body.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-action]");
+          if (button) {
+            const index = Number(button.dataset.index);
+            const delta = button.dataset.action === "increase" ? 1 : -1;
+            changeMastery(index, delta);
+            return;
+          }
+
+          const row = event.target.closest("tr[data-index]");
+          if (!row) return;
+          playWord(Number(row.dataset.index));
+        });
+      }
+
+      async function registerAudioWorker() {
+        if (!("serviceWorker" in navigator) || !window.isSecureContext) {
+          els.cacheAudio.disabled = true;
+          els.cacheAudio.textContent = "缓存不可用";
+          updateStatus("当前环境不支持音频缓存；请通过 localhost 或 HTTPS 打开页面。");
+          return;
+        }
+
+        try {
+          const registration = await navigator.serviceWorker.register("sw.js");
+          await navigator.serviceWorker.ready;
+          enableAudioCacheIfControlled();
+
+          navigator.serviceWorker.addEventListener("controllerchange", enableAudioCacheIfControlled);
+
+          navigator.serviceWorker.addEventListener("message", (event) => {
+            const data = event.data || {};
+            if (data.type !== "audio-cache-progress") return;
+
+            els.cacheAudio.disabled = !data.complete;
+            els.cacheAudio.textContent = data.complete ? "缓存音频" : `缓存 ${data.done}/${data.total}`;
+            updateStatus(data.complete
+              ? `音频缓存完成：${data.total - data.failed}/${data.total}，失败 ${data.failed}`
+              : `正在缓存音频：${data.done}/${data.total}，失败 ${data.failed}`);
+          });
+
+          if (navigator.serviceWorker.controller) {
+            updateStatus("音频缓存服务已就绪。");
+          } else if (registration.active) {
+            els.cacheAudio.textContent = "刷新后缓存";
+            updateStatus("音频缓存服务已注册，刷新页面后会完全接管音频请求。");
+          }
+        } catch (error) {
+          els.cacheAudio.disabled = true;
+          els.cacheAudio.textContent = "缓存不可用";
+          updateStatus(error.message || "音频缓存服务注册失败");
+        }
+      }
+
+      function enableAudioCacheIfControlled() {
+        if (!navigator.serviceWorker.controller) return;
+        state.serviceWorkerReady = true;
+        els.cacheAudio.disabled = false;
+        els.cacheAudio.textContent = "缓存音频";
+      }
+
+      function cacheAllAudio() {
+        if (!state.serviceWorkerReady || !navigator.serviceWorker.controller) {
+          updateStatus("音频缓存服务还未接管页面，请刷新后再点缓存音频。");
+          return;
+        }
+
+        els.cacheAudio.disabled = true;
+        els.cacheAudio.textContent = "准备缓存";
+        navigator.serviceWorker.controller.postMessage({
+          type: "cache-audio",
+          words: state.words.map(getAudioText)
+        });
+      }
+
+      function playWord(index) {
+        const word = state.words[index];
+        if (!word) return;
+
+        const text = String(word["单词"] || "").trim();
+        const audioText = getAudioText(word);
+        if (!text || !audioText) return;
+
+        state.playingIndex = index;
+        state.audio.pause();
+        state.audio.src = remoteAudioUrl(audioText);
+        state.audio.currentTime = 0;
+        state.audio.play()
+          .then(() => {
+            applyPlayingState();
+            updateStatus(`正在播放：${text}`);
+          })
+          .catch((error) => updateStatus(error.message || `播放失败：${text}`));
+      }
+
+      function remoteAudioUrl(word) {
+        const url = new URL("https://dict.youdao.com/dictvoice");
+        url.searchParams.set("audio", word);
+        url.searchParams.set("type", "2");
+        return url.toString();
+      }
+
+      function getAudioText(word) {
+        const raw = String(word["音频单词"] || word["单词"] || "").trim();
+        return raw
+          .replace(/\s*\([^)]*\)\s*/g, "")
+          .replace(/,.*$/, "")
+          .trim();
+      }
+
+      function updateStickyOffset() {
+        document.documentElement.style.setProperty("--top-offset", `${els.topPanel.offsetHeight}px`);
+      }
+
+      async function fetchWords() {
+        const response = await fetch(DATA_URL, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`JSON 请求失败：${response.status}`);
+        }
+
+        const words = await response.json();
+        if (!Array.isArray(words)) {
+          throw new Error("JSON 数据不是数组。");
+        }
+
+        saveWords(words);
+        return words;
+      }
+
+      function loadCachedWords() {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return null;
+
+        try {
+          const words = JSON.parse(cached);
+          return Array.isArray(words) ? words : null;
+        } catch {
+          localStorage.removeItem(CACHE_KEY);
+          return null;
+        }
+      }
+
+      function saveWords(words) {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(words));
+      }
+
+      function normalizeWords() {
+        state.words.forEach((word, index) => {
+          word.__index = index;
+          word["熟练度"] = clampMastery(word["熟练度"]);
+        });
+        saveWords(state.words);
+      }
+
+      function buildLevelFilter() {
+        const levels = [...new Set(state.words.map((word) => word["分类"]).filter(Boolean))];
+        els.levelFilter.innerHTML = '<option value="">全部等级</option>';
+
+        levels.forEach((level) => {
+          const option = document.createElement("option");
+          option.value = level;
+          option.textContent = level;
+          els.levelFilter.append(option);
+        });
+
+        els.levelFilter.value = state.level;
+      }
+
+      function applyFilters() {
+        const query = state.query;
+
+        state.filtered = state.words.filter((word) => {
+          const matchesLevel = !state.level || word["分类"] === state.level;
+          const matchesMastery = !state.mastery || String(word["熟练度"]) === state.mastery;
+          const haystack = `${word["单词"] || ""} ${word["词性"] || ""} ${word["中文释义"] || ""}`.toLowerCase();
+          const matchesQuery = !query || haystack.includes(query);
+          return matchesLevel && matchesMastery && matchesQuery;
+        });
+
+        renderStats();
+        renderTable();
+      }
+
+      function renderStats() {
+        const total = state.words.length;
+        const shown = state.filtered.length;
+        const avg = total
+          ? state.words.reduce((sum, word) => sum + word["熟练度"], 0) / total
+          : 0;
+
+        els.totalCount.textContent = total;
+        els.shownCount.textContent = shown;
+        els.avgMastery.textContent = avg.toFixed(1);
+      }
+
+      function renderTable() {
+        els.body.innerHTML = "";
+
+        if (!state.filtered.length) {
+          showMessage("没有匹配的单词。");
+          return;
+        }
+
+        els.message.hidden = true;
+
+        const fragment = document.createDocumentFragment();
+        state.filtered.forEach((word) => {
+          const row = document.createElement("tr");
+          row.dataset.index = word.__index;
+          row.innerHTML = `
+            <td class="word">${escapeHtml(word["单词"])}</td>
+            <td class="pos">${escapeHtml(word["词性"])}</td>
+            <td class="meaning" data-meaning="${escapeHtml(word["中文释义"])}"><span class="meaning-text">${escapeHtml(word["中文释义"])}</span></td>
+            <td class="level"><span class="badge">${escapeHtml(word["分类"])}</span></td>
+            <td class="mastery">
+              <strong>${word["熟练度"]}</strong>
+              <div class="meter" aria-hidden="true">${renderMeter(word["熟练度"])}</div>
+            </td>
+            <td class="actions">
+              <div class="stepper" aria-label="调整 ${escapeHtml(word["单词"])} 熟练度">
+                <button type="button" data-action="decrease" data-index="${word.__index}" ${word["熟练度"] <= MIN_MASTERY ? "disabled" : ""}>-</button>
+                <button type="button" data-action="increase" data-index="${word.__index}" ${word["熟练度"] >= MAX_MASTERY ? "disabled" : ""}>+</button>
+              </div>
+            </td>
+          `;
+          fragment.append(row);
+        });
+
+        els.body.append(fragment);
+        applyPlayingState();
+        requestAnimationFrame(markTruncatedMeanings);
+      }
+
+      function applyPlayingState() {
+        els.body.querySelectorAll("tr[data-index]").forEach((row) => {
+          row.classList.toggle("is-playing", Number(row.dataset.index) === state.playingIndex);
+        });
+      }
+
+      function markTruncatedMeanings() {
+        document.querySelectorAll(".meaning").forEach((cell) => {
+          const text = cell.querySelector(".meaning-text");
+          const isTruncated = text && text.scrollWidth > text.clientWidth + 1;
+
+          cell.classList.toggle("is-truncated", Boolean(isTruncated));
+          if (isTruncated) {
+            cell.setAttribute("tabindex", "0");
+            cell.setAttribute("title", "悬停查看完整释义");
+          } else {
+            cell.removeAttribute("tabindex");
+            cell.removeAttribute("title");
+          }
+        });
+      }
+
+      function renderMeter(value) {
+        return Array.from({ length: MAX_MASTERY }, (_, index) => {
+          const className = index < value ? "dot on" : "dot";
+          return `<span class="${className}"></span>`;
+        }).join("");
+      }
+
+      function changeMastery(index, delta) {
+        const word = state.words[index];
+        if (!word) return;
+
+        word["熟练度"] = clampMastery(word["熟练度"] + delta);
+        saveWords(state.words);
+        applyFilters();
+        updateStatus(`已保存：${word["单词"]} 熟练度 ${word["熟练度"]}`);
+      }
+
+      function clampMastery(value) {
+        const number = Number(value) || 3;
+        return Math.min(MAX_MASTERY, Math.max(MIN_MASTERY, number));
+      }
+
+      function showMessage(text) {
+        els.body.innerHTML = "";
+        els.message.textContent = text;
+        els.message.className = text.includes("失败") ? "error" : "empty";
+        els.message.hidden = false;
+      }
+
+      function updateStatus(text) {
+        els.status.textContent = text;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+    </script>
   </body>
 </html>
