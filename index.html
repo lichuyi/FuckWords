@@ -120,14 +120,15 @@
 
       .toolbar {
         display: grid;
-        grid-template-columns: minmax(220px, 1fr) 150px 150px auto;
+        grid-template-columns: minmax(220px, 1fr) 150px 150px auto auto auto;
         gap: 8px;
         align-items: center;
         margin: 8px 0;
       }
 
       .field,
-      .cache-button {
+      .cache-button,
+      .data-button {
         min-height: 34px;
         border: 1px solid var(--line);
         background: rgba(255, 252, 244, 0.92);
@@ -144,19 +145,25 @@
         border-color: var(--accent);
       }
 
-      .cache-button {
+      .cache-button,
+      .data-button {
         padding: 0 12px;
         cursor: pointer;
         white-space: nowrap;
       }
 
-      .cache-button:hover:not(:disabled) {
+      .cache-button:hover:not(:disabled),
+      .data-button:hover {
         border-color: var(--ink);
       }
 
       .cache-button:disabled {
         cursor: wait;
         opacity: 0.64;
+      }
+
+      .file-input {
+        display: none;
       }
 
       .status {
@@ -370,7 +377,7 @@
         }
 
         .toolbar {
-          grid-template-columns: minmax(180px, 1fr) 120px 120px auto;
+          grid-template-columns: minmax(180px, 1fr) 120px 120px auto auto auto;
         }
 
         .summary {
@@ -452,6 +459,9 @@
             <option value="5">熟练度 5</option>
           </select>
           <button id="cacheAudio" class="cache-button" type="button" disabled>缓存音频</button>
+          <button id="exportStorage" class="data-button" type="button">导出数据</button>
+          <button id="importStorage" class="data-button" type="button">导入数据</button>
+          <input id="importStorageFile" class="file-input" type="file" accept="application/json,.json">
         </section>
 
         <p id="status" class="status">正在加载词库...</p>
@@ -504,6 +514,9 @@
         levelFilter: document.getElementById("levelFilter"),
         masteryFilter: document.getElementById("masteryFilter"),
         cacheAudio: document.getElementById("cacheAudio"),
+        exportStorage: document.getElementById("exportStorage"),
+        importStorage: document.getElementById("importStorage"),
+        importStorageFile: document.getElementById("importStorageFile"),
         status: document.getElementById("status"),
         body: document.getElementById("wordBody"),
         message: document.getElementById("message")
@@ -557,6 +570,9 @@
         });
 
         els.cacheAudio.addEventListener("click", cacheAllAudio);
+        els.exportStorage.addEventListener("click", exportLocalStorage);
+        els.importStorage.addEventListener("click", () => els.importStorageFile.click());
+        els.importStorageFile.addEventListener("change", importLocalStorage);
 
         state.audio.addEventListener("ended", () => {
           state.playingIndex = null;
@@ -707,6 +723,99 @@
 
       function saveWords(words) {
         localStorage.setItem(CACHE_KEY, JSON.stringify(words));
+      }
+
+      function exportLocalStorage() {
+        const payload = {
+          app: "FuckWords",
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          localStorage: {
+            [CACHE_KEY]: localStorage.getItem(CACHE_KEY),
+            [FILTER_CACHE_KEY]: localStorage.getItem(FILTER_CACHE_KEY)
+          }
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `fuckwords-localstorage-${formatDateForFile(new Date())}.json`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        updateStatus("已导出 localStorage 数据。");
+      }
+
+      async function importLocalStorage(event) {
+        const file = event.target.files && event.target.files[0];
+        event.target.value = "";
+        if (!file) return;
+
+        try {
+          const payload = JSON.parse(await file.text());
+          const storage = extractImportedStorage(payload);
+          const hasWordsKey = Object.prototype.hasOwnProperty.call(storage, CACHE_KEY);
+          const hasFiltersKey = Object.prototype.hasOwnProperty.call(storage, FILTER_CACHE_KEY);
+
+          if (!hasWordsKey && !hasFiltersKey) {
+            throw new Error("导入文件里没有可用的 FuckWords localStorage 数据。");
+          }
+
+          if (hasWordsKey && storage[CACHE_KEY]) {
+            const words = parseMaybeString(storage[CACHE_KEY]);
+            if (!Array.isArray(words)) {
+              throw new Error("导入的词库缓存格式不正确。");
+            }
+            localStorage.setItem(CACHE_KEY, JSON.stringify(words));
+            state.words = words;
+          } else if (hasWordsKey) {
+            localStorage.removeItem(CACHE_KEY);
+            state.words = await fetchWords();
+          } else {
+            state.words = loadCachedWords() || await fetchWords();
+          }
+
+          if (hasFiltersKey && storage[FILTER_CACHE_KEY]) {
+            const filters = parseMaybeString(storage[FILTER_CACHE_KEY]);
+            localStorage.setItem(FILTER_CACHE_KEY, JSON.stringify({
+              query: String(filters.query || ""),
+              level: String(filters.level || ""),
+              mastery: String(filters.mastery || "")
+            }));
+          } else if (hasFiltersKey) {
+            localStorage.removeItem(FILTER_CACHE_KEY);
+          }
+
+          state.query = "";
+          state.level = "";
+          state.mastery = "";
+          els.searchInput.value = "";
+          els.masteryFilter.value = "";
+          loadFilterState();
+          normalizeWords();
+          buildLevelFilter();
+          applyFilters();
+          updateStatus("已导入 localStorage 数据。");
+        } catch (error) {
+          updateStatus(error.message || "导入失败。");
+        }
+      }
+
+      function parseMaybeString(value) {
+        return typeof value === "string" ? JSON.parse(value) : value;
+      }
+
+      function extractImportedStorage(payload) {
+        if (payload && typeof payload.localStorage === "object" && payload.localStorage) {
+          return payload.localStorage;
+        }
+        if (payload && typeof payload === "object") {
+          return payload;
+        }
+        return {};
+      }
+
+      function formatDateForFile(date) {
+        return date.toISOString().slice(0, 19).replace(/[-:T]/g, "");
       }
 
       function loadFilterState() {
