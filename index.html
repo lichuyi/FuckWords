@@ -480,6 +480,7 @@
     <script>
       const DATA_URL = "American_Oxford_3000_by_CEFR_level.json";
       const CACHE_KEY = "fuckwords:american-oxford-3000:v1";
+      const FILTER_CACHE_KEY = "fuckwords:filters:v1";
       const MAX_MASTERY = 5;
       const MIN_MASTERY = 1;
 
@@ -514,6 +515,7 @@
         bindEvents();
         updateStickyOffset();
         registerAudioWorker();
+        loadFilterState();
 
         try {
           state.words = loadCachedWords() || await fetchWords();
@@ -538,16 +540,19 @@
 
         els.searchInput.addEventListener("input", () => {
           state.query = els.searchInput.value.trim().toLowerCase();
+          saveFilterState();
           applyFilters();
         });
 
         els.levelFilter.addEventListener("change", () => {
           state.level = els.levelFilter.value;
+          saveFilterState();
           applyFilters();
         });
 
         els.masteryFilter.addEventListener("change", () => {
           state.mastery = els.masteryFilter.value;
+          saveFilterState();
           applyFilters();
         });
 
@@ -704,6 +709,30 @@
         localStorage.setItem(CACHE_KEY, JSON.stringify(words));
       }
 
+      function loadFilterState() {
+        const cached = localStorage.getItem(FILTER_CACHE_KEY);
+        if (!cached) return;
+
+        try {
+          const filters = JSON.parse(cached);
+          state.query = String(filters.query || "");
+          state.level = String(filters.level || "");
+          state.mastery = String(filters.mastery || "");
+          els.searchInput.value = state.query;
+          els.masteryFilter.value = state.mastery;
+        } catch {
+          localStorage.removeItem(FILTER_CACHE_KEY);
+        }
+      }
+
+      function saveFilterState() {
+        localStorage.setItem(FILTER_CACHE_KEY, JSON.stringify({
+          query: state.query,
+          level: state.level,
+          mastery: state.mastery
+        }));
+      }
+
       function normalizeWords() {
         state.words.forEach((word, index) => {
           word.__index = index;
@@ -724,6 +753,10 @@
         });
 
         els.levelFilter.value = state.level;
+        if (els.levelFilter.value !== state.level) {
+          state.level = "";
+          saveFilterState();
+        }
       }
 
       function applyFilters() {
